@@ -31,7 +31,7 @@ var processCleanupTimeout = 6 * 60 * 60 * 1000;
 var debug = false;
 var playlistRetryDelay = 500;
 var playlistRetryTimeout = 60000;
-var playlistEndMinTime = 20000;
+var playlistEndMinTime = 2000;
 
 var videoExtensions = ['.mp4','.3gp2','.3gp','.3gpp', '.3gp2','.amv','.asf','.avs','.dat','.dv', '.dvr-ms','.f4v','.m1v','.m2p','.m2ts','.m2v', '.m4v','.mkv','.mod','.mp4','.mpe','.mpeg1', '.mpeg2','.divx','.mpeg4','.mpv','.mts','.mxf', '.nsv','.ogg','.ogm','.mov','.qt','.rv','.tod', '.trp','.tp','.vob','.vro','.wmv','.web,', '.rmvb', '.rm','.ogv','.mpg', '.avi', '.mkv', '.wmv', '.asf', '.m4v', '.flv', '.mpg', '.mpeg', '.mov', '.vob', '.ts', '.webm'];
 var audioExtensions = ['.mp3', '.aac', '.m4a'];
@@ -88,12 +88,13 @@ function spawnNewProcess(file, playlistPath) {
 		var args = [
 			'-i', file, '-sn',
 			'-async', '1', '-acodec', 'libmp3lame', '-b:a', audioBitrate + 'k', '-ar', '44100', '-ac', '2',
-			'-vf', 'scale=min(' + targetWidth + '\\, iw):-1', '-b:v', videoBitrate + 'k', '-vcodec', 'libx264', '-profile:v', 'baseline', '-preset:v' ,'superfast',
-			'-x264opts', 'level=3.0',
-			'-threads', '0', '-flags', '-global_header', '-map', '0',
+			//'-vf', 'scale=min(' + targetWidth + '\\, iw):-1', '-b:v', videoBitrate + 'k', '-vcodec', 'libx264', '-profile:v', 'baseline', '-preset:v' ,'superfast',
+			//'-x264opts', 'level=3.0',
+			'-codec:v', 'copy',
+			'-threads', '4', '-flags', '-global_header', '-map', '0',
 			// '-map', '0:v:0', '-map', '0:a:1'
 			'-f', 'segment',
-			'-segment_list', playlistFileName, '-segment_format', 'mpegts', '-segment_list_flags', 'live', tsOutputFormat
+			'-segment_list', playlistFileName, '-segment_format', 'mpegts', '-segment_list_flags', 'cache', '-segment_time', '10', tsOutputFormat
 			//'-segment_time', '10', '-force_key_frames', 'expr:gte(t,n_forced*10)',
 			//'-f', 'hls', '-hls_time', '10', '-hls_list_size', '0', '-hls_allow_cache', '0', '-hls_segment_filename', tsOutputFormat, playlistFileName
 		];
@@ -126,7 +127,7 @@ function spawnNewProcess(file, playlistPath) {
 	currentFile = file;
 
 	encoderChild.stderr.on('data', function(data) {
-		if (debug) console.log(data.toString());
+		//if (debug) console.log(data.toString());
 	});
 
 	encoderChild.on('exit', function(code) {
@@ -209,6 +210,7 @@ function pollForPlaylist(file, response, playlistPath) {
 				//response.sendfile(playlistPath);
 
 				var readStream2 = fs.createReadStream(playlistPath);
+				console.log("create readStream2.")
 
 				readStream2.on('error', function(err) {
 					console.log(err);
@@ -220,7 +222,7 @@ function pollForPlaylist(file, response, playlistPath) {
 				response.setHeader('Content-Type', 'application/x-mpegURL');
 
 				withModifiedPlaylist(readStream2, function(line) {
-					if (debug) console.log(line);
+					if (debug) console.log('readStream2: ' + line);
 					response.write(line + '\n');
 				}, function() {
 					response.end();
