@@ -57,3 +57,8 @@ For more arguments run it without arguments: `hls-vod`
 Limitations
 -----------
 - Currently only supports encoding one stream at a time (only one user at a time).
+
+James's todo item:
+1. Multipe people can watch the vod video.
+2. Detect video format. If the video is alraedy encoded with H264 encoder, do not do encode again to save resource.
+3. Make is usable on windows. The orignal one can only play for seconds on windows.  It can only download the first 3 clips.
